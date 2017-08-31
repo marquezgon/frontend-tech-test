@@ -1,7 +1,12 @@
 'use strict';
-
+const path = require('path');
+const express = require('express');
 const app = require('express')();
 const tasksContainer = require('./tasks.json');
+const indexPath = path.join(__dirname, 'index.html');
+const publicPath = express.static(path.join(__dirname, './dist'));
+
+app.use('/dist', publicPath);
 
 /**
  * GET /tasks
@@ -135,6 +140,22 @@ app.delete('/task/delete/:id', (req, res) => {
     });
   }
 });
+
+app.get('/', function (_, res) { res.sendFile(indexPath) });
+
+if (process.env.NODE_ENV !== 'production') {
+    const webpack = require('webpack')
+    const webpackDevMiddleware = require('webpack-dev-middleware')
+    const webpackHotMiddleware = require('webpack-hot-middleware')
+    const config = require('./webpack.production.config.js')
+    const compiler = webpack(config)
+
+    app.use(webpackHotMiddleware(compiler))
+    app.use(webpackDevMiddleware(compiler, {
+        noInfo: true,
+        publicPath: config.output.publicPathdist
+    }))
+}
 
 app.listen(9001, () => {
   process.stdout.write('the server is available on http://localhost:9001/\n');
